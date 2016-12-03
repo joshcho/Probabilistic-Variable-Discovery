@@ -85,6 +85,10 @@ var getExperiment = function(h, datum) {
         return runExperiment(opts_inner, datum, 0, 0, 1);
     } else if (h == "0 1 2") {
         return runExperiment(opts_inner, datum, 0, 1, 2);
+    } else if (h == "0 1 0") {
+        return runExperiment(opts_inner, datum, 0, 1, 0);
+    } else if (h == "1 0 0") {
+        return runExperiment(opts_inner, datum, 1, 0, 0);
     }
 };
 
@@ -93,7 +97,7 @@ var study = function(datum) {
         method: 'enumerate'
     }, function() {
         // var hypothesis = flip() ? 'H0' : 'HA';
-        var hypotheses = ['0 0 0', '0 0 1', '0 1 2'];
+        var hypotheses = ['0 0 0', '0 0 1', '0 1 2', "0 1 0", "1 0 0"];
         var hypothesis = hypotheses[sample(RandomInteger({n: hypotheses.length}))];
         var experiment = getExperiment(hypothesis, datum);
         var m_pred1 = marginalize(experiment, 'pred1');
