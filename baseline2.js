@@ -1,5 +1,6 @@
 var n1 = 10;
 var n2 = 10;
+var n3 = 10;
 //var k1=0; var k2=10;
 // var data = {
 //     trial1: [0, 10],
@@ -43,9 +44,9 @@ var marginalize = function(dist, key) {
     });
 };
 
-var runExperiment = function(opts, datum, i, j) {
+var runExperiment = function(opts, datum, i, j, k) {
     return Infer(opts, function() {
-        var p = [uniform(0, 1), uniform(0, 1), uniform(0, 1)];
+        var p = [uniform(0, 1), uniform(0, 1), uniform(0,1)];
         observe(Binomial({
             p: p[i],
             n: n1
@@ -54,13 +55,20 @@ var runExperiment = function(opts, datum, i, j) {
             p: p[j],
             n: n2
         }), datum[1]);
+        observe(Binomial({
+            p: p[k],
+            n: n3
+        }), datum[2]);
         var pred1 = binomial(p[i], n1);
         var pred2 = binomial(p[j], n2);
+        var pred3 = binomial(p[k], n3);
         return {
             'p1': p[i],
             'p2': p[j],
+            'p3': p[k],
             pred1: pred1,
-            pred2: pred2
+            pred2: pred2,
+            pred3: pred3
         };
     });
 };
@@ -71,10 +79,12 @@ var getExperiment = function(h, datum) {
         samples: 20000,
         burn: 30000
     };
-    if (h == "H0") {
-        return runExperiment(opts_inner, datum, 0, 0);
-    } else if (h == "HA") {
-        return runExperiment(opts_inner, datum, 1, 2);
+    if (h == "0 0 0") {
+        return runExperiment(opts_inner, datum, 0, 0, 0);
+    } else if (h == "0 0 1") {
+        return runExperiment(opts_inner, datum, 0, 0, 1);
+    } else if (h == "0 1 2") {
+        return runExperiment(opts_inner, datum, 0, 1, 2);
     }
 };
 
@@ -82,12 +92,16 @@ var study = function(datum) {
     return Infer({
         method: 'enumerate'
     }, function() {
-        var hypothesis = flip() ? 'H0' : 'HA';
+        // var hypothesis = flip() ? 'H0' : 'HA';
+        var hypotheses = ['0 0 0', '0 0 1', '0 1 2'];
+        var hypothesis = hypotheses[sample(RandomInteger({n: hypotheses.length}))];
         var experiment = getExperiment(hypothesis, datum);
         var m_pred1 = marginalize(experiment, 'pred1');
         var m_pred2 = marginalize(experiment, 'pred2');
+        var m_pred3 = marginalize(experiment, 'pred3');
         observe(m_pred1, datum[0]);
         observe(m_pred2, datum[1]);
+        observe(m_pred3, datum[2]);
         return hypothesis;
     });
 };
@@ -99,9 +113,9 @@ var visualizeStudy = function(datum) {
     //print("probabilities p1, p2: "+mean(s[1])+', '+mean(s[2]))
     return s;
 };
-visualizeStudy([5, 5]);
-visualizeStudy([0, 0]);
-visualizeStudy([0, 10]);
+visualizeStudy([5, 5, 5]);
+visualizeStudy([0, 0, 10]);
+visualizeStudy([0, 5, 10]);
 // map(function(i,j) {
 //   map(function(j) {
 //     if (i>j) return;
