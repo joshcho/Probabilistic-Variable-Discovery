@@ -79,34 +79,30 @@ var getExperiment = function(h, datum) {
         samples: 20000,
         burn: 30000
     };
-    if (h == "0 0 0") {
-        return runExperiment(opts_inner, datum, 0, 0, 0);
-    } else if (h == "0 0 1") {
-        return runExperiment(opts_inner, datum, 0, 0, 1);
-    } else if (h == "0 1 2") {
-        return runExperiment(opts_inner, datum, 0, 1, 2);
-    } else if (h == "0 1 0") {
-        return runExperiment(opts_inner, datum, 0, 1, 0);
-    } else if (h == "1 0 0") {
-        return runExperiment(opts_inner, datum, 1, 0, 0);
-    }
+    var e = h.split(" "); // encoding
+    return runExperiment(opts_inner, datum, e[0], e[1], e[2]);
 };
 
 var study = function(datum) {
+    var numParams = datum.length;
     return Infer({
         method: 'enumerate'
     }, function() {
         // var hypothesis = flip() ? 'H0' : 'HA';
         var hypotheses = ['0 0 0', '0 0 1', '0 1 2', "0 1 0", "1 0 0"];
-        var hypothesis = hypotheses[sample(RandomInteger({n: hypotheses.length}))];
-        var experiment = getExperiment(hypothesis, datum);
-        var m_pred1 = marginalize(experiment, 'pred1');
-        var m_pred2 = marginalize(experiment, 'pred2');
-        var m_pred3 = marginalize(experiment, 'pred3');
-        observe(m_pred1, datum[0]);
-        observe(m_pred2, datum[1]);
-        observe(m_pred3, datum[2]);
-        return hypothesis;
+        var h = hypotheses[sample(RandomInteger({n: hypotheses.length}))];
+        var experiment = getExperiment(h, datum);
+        var m_preds = map(function(i) {marginalize(experiment, 'pred' + (i + 1));}, _.range(hypotheses.length));
+        // for (i = 0; i < numParams; i++) {
+        //     var m_pred = marginalize(experiment, 'pred' + (i + 1));
+        //     observe(m_pred, datum[i]);
+        // }
+        observe(m_preds[0], datum[0]);
+        observe(m_preds[1], datum[1]);
+        observe(m_preds[2], datum[2]);
+        observe(m_preds[3], datum[3]);
+        observe(m_preds[4], datum[4]);
+        return h;
     });
 };
 
